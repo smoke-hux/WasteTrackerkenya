@@ -21,8 +21,9 @@ The application follows a modern full-stack architecture with:
 ### Database Layer
 - **ORM**: Drizzle ORM with PostgreSQL dialect
 - **Schema**: Comprehensive schema including users, pickup requests, collections, illegal dumping reports, and waste metrics
-- **Database Provider**: Neon Database (serverless PostgreSQL)
-- **Migrations**: Managed through Drizzle Kit
+- **Database Provider**: PostgreSQL database with Neon serverless connection
+- **Migrations**: Managed through Drizzle Kit with `npm run db:push`
+- **Storage**: Database-backed storage replacing in-memory storage for persistent data
 
 ### Authentication & Authorization
 - **Role-Based Access**: Supports two user roles (resident and collector)
@@ -83,6 +84,7 @@ Changelog:
 - June 23, 2025. Initial setup
 - June 23, 2025. Added comprehensive dark/light mode theme system with toggle functionality
 - June 23, 2025. Rebranded application from "EcoCollect" to "YUGI"
+- June 23, 2025. Integrated PostgreSQL database with Drizzle ORM, replacing in-memory storage with persistent database storage
 
 ## User Preferences
 
