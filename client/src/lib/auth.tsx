@@ -16,12 +16,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     // Check for stored user session
-    const storedUser = localStorage.getItem('ecocollect_user');
+    const storedUser = localStorage.getItem('yugi_user');
     if (storedUser) {
       try {
         setUser(JSON.parse(storedUser));
       } catch (error) {
-        localStorage.removeItem('ecocollect_user');
+        localStorage.removeItem('yugi_user');
       }
     }
     setIsLoading(false);
@@ -29,12 +29,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = (userData: User) => {
     setUser(userData);
-    localStorage.setItem('ecocollect_user', JSON.stringify(userData));
+    localStorage.setItem('yugi_user', JSON.stringify(userData));
   };
 
   const logout = () => {
     setUser(null);
-    localStorage.removeItem('ecocollect_user');
+    localStorage.removeItem('yugi_user');
   };
 
   return (

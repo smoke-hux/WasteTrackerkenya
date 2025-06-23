@@ -29,7 +29,7 @@ export default function RoleSelection() {
       </div>
       <div className="text-center mb-12">
         <Recycle className="w-12 h-12 text-eco-green mx-auto mb-4" />
-        <h2 className="text-2xl font-bold text-foreground mb-2">Welcome to EcoCollect</h2>
+        <h2 className="text-2xl font-bold text-foreground mb-2">Welcome to YUGI</h2>
         <p className="text-muted-foreground">Choose your role to continue</p>
       </div>
 

@@ -1,8 +1,8 @@
-# EcoCollect - Smart Waste Management Platform
+# YUGI - Smart Waste Management Platform
 
 ## Overview
 
-EcoCollect is a mobile-first web application that connects residents with waste collectors to enable efficient waste pickup and recycling services. The platform features a dual-role system where residents can request waste pickups and collectors can manage their collection routes and jobs.
+YUGI is a mobile-first web application that connects residents with waste collectors to enable efficient waste pickup and recycling services. The platform features a dual-role system where residents can request waste pickups and collectors can manage their collection routes and jobs.
 
 ## System Architecture
 

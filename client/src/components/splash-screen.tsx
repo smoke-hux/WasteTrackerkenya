@@ -18,7 +18,7 @@ export default function SplashScreen() {
       <div className="text-white text-center">
         <div className="mb-8">
           <Recycle className="w-16 h-16 mx-auto mb-4" />
-          <h1 className="text-3xl font-bold">EcoCollect</h1>
+          <h1 className="text-3xl font-bold">YUGI</h1>
           <p className="text-lg opacity-90">Smart Waste Management</p>
         </div>
         <div className="animate-pulse">
