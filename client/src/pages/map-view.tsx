@@ -17,15 +17,15 @@ export default function MapView() {
   return (
     <div className="relative h-screen">
       {/* Header */}
-      <div className="absolute top-0 left-0 right-0 bg-white bg-opacity-95 backdrop-blur p-4 z-10 flex items-center">
+      <div className="absolute top-0 left-0 right-0 bg-background/95 backdrop-blur p-4 z-10 flex items-center">
         <Button 
           onClick={goBack}
           size="sm" 
-          className="mr-4 bg-white shadow-sm"
+          className="mr-4 bg-background shadow-sm"
         >
-          <ArrowLeft className="w-4 h-4 text-eco-gray" />
+          <ArrowLeft className="w-4 h-4 text-muted-foreground" />
         </Button>
-        <h3 className="font-semibold text-eco-dark">Live Map</h3>
+        <h3 className="font-semibold text-foreground">Live Map</h3>
       </div>
 
       {/* Mock Map */}

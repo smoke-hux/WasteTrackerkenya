@@ -2,6 +2,7 @@ import { Home, Truck, ChevronRight } from 'lucide-react';
 import { Link } from 'wouter';
 import { Recycle } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
+import { ThemeToggle } from '@/components/theme-toggle';
 
 export default function RoleSelection() {
   const { login } = useAuth();
@@ -22,11 +23,14 @@ export default function RoleSelection() {
   };
 
   return (
-    <div className="p-6 min-h-screen flex flex-col justify-center">
+    <div className="p-6 min-h-screen flex flex-col justify-center bg-background">
+      <div className="absolute top-4 right-4">
+        <ThemeToggle />
+      </div>
       <div className="text-center mb-12">
         <Recycle className="w-12 h-12 text-eco-green mx-auto mb-4" />
-        <h2 className="text-2xl font-bold text-eco-dark mb-2">Welcome to EcoCollect</h2>
-        <p className="text-eco-gray">Choose your role to continue</p>
+        <h2 className="text-2xl font-bold text-foreground mb-2">Welcome to EcoCollect</h2>
+        <p className="text-muted-foreground">Choose your role to continue</p>
       </div>
 
       <div className="space-y-4">

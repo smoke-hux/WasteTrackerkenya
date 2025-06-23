@@ -75,15 +75,15 @@ export default function ReportDumping() {
   if (!user) return null;
 
   return (
-    <div className="min-h-screen bg-eco-light">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="bg-white p-4 shadow-sm border-b flex items-center">
+      <div className="bg-background border-b border-border p-4 shadow-sm flex items-center">
         <Link href="/resident/dashboard">
           <button className="mr-4">
-            <ArrowLeft className="w-5 h-5 text-eco-gray" />
+            <ArrowLeft className="w-5 h-5 text-muted-foreground" />
           </button>
         </Link>
-        <h3 className="font-semibold text-eco-dark">Report Illegal Dumping</h3>
+        <h3 className="font-semibold text-foreground">Report Illegal Dumping</h3>
       </div>
 
       <div className="p-4 space-y-6">
@@ -182,7 +182,7 @@ export default function ReportDumping() {
       </div>
 
       {/* Bottom Button */}
-      <div className="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-md p-4 bg-white border-t border-gray-100">
+      <div className="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-md p-4 bg-background border-t border-border">
         <Button 
           className="w-full bg-red-500 text-white py-4 rounded-2xl font-medium text-lg hover:bg-red-600"
           onClick={handleSubmit}

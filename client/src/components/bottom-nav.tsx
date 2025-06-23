@@ -26,7 +26,7 @@ export default function BottomNav({ userRole }: BottomNavProps) {
   const navItems = userRole === 'resident' ? residentNavItems : collectorNavItems;
 
   return (
-    <div className="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-md bg-white border-t border-gray-100 px-4 py-2">
+    <div className="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-md bg-background border-t border-border px-4 py-2">
       <div className="flex justify-around">
         {navItems.map((item) => {
           const isActive = location === item.path;
@@ -40,7 +40,7 @@ export default function BottomNav({ userRole }: BottomNavProps) {
                     ? userRole === 'resident' 
                       ? 'text-eco-green' 
                       : 'text-eco-orange'
-                    : 'text-eco-gray'
+                    : 'text-muted-foreground'
                 }`}
               >
                 <Icon className="w-5 h-5 mb-1" />

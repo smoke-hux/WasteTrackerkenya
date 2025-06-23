@@ -68,15 +68,15 @@ export default function Analytics() {
   const maxWeight = Math.max(...weeklyData.map(d => d.weight));
 
   return (
-    <div className="min-h-screen bg-eco-light pb-6">
+    <div className="min-h-screen bg-background pb-6">
       {/* Header */}
-      <div className="bg-white p-4 shadow-sm border-b flex items-center">
+      <div className="bg-background border-b border-border p-4 shadow-sm flex items-center">
         <Link href="/resident/dashboard">
           <button className="mr-4">
-            <ArrowLeft className="w-5 h-5 text-eco-gray" />
+            <ArrowLeft className="w-5 h-5 text-muted-foreground" />
           </button>
         </Link>
-        <h3 className="font-semibold text-eco-dark">Analytics</h3>
+        <h3 className="font-semibold text-foreground">Analytics</h3>
       </div>
 
       <div className="p-4 space-y-6">
