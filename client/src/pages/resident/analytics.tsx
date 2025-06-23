@@ -50,9 +50,9 @@ export default function Analytics() {
   }
 
   // Calculate metrics from collections data
-  const totalCollected = collections?.reduce((sum: number, c: any) => sum + parseFloat(c.weight || '0'), 0) || 0;
-  const totalEarnings = collections?.reduce((sum: number, c: any) => sum + parseFloat(c.price || '0'), 0) || 0;
-  const totalCO2Saved = collections?.reduce((sum: number, c: any) => sum + parseFloat(c.co2Saved || '0'), 0) || 0;
+  const totalCollected = Array.isArray(collections) ? collections.reduce((sum: number, c: any) => sum + parseFloat(c.weight || '0'), 0) : 0;
+  const totalEarnings = Array.isArray(collections) ? collections.reduce((sum: number, c: any) => sum + parseFloat(c.price || '0'), 0) : 0;
+  const totalCO2Saved = Array.isArray(collections) ? collections.reduce((sum: number, c: any) => sum + parseFloat(c.co2Saved || '0'), 0) : 0;
 
   // Mock weekly data for chart
   const weeklyData = [
