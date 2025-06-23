@@ -4,6 +4,8 @@ import {
   type Collection, type InsertCollection, type IllegalDumpingReport, type InsertIllegalDumpingReport,
   type WasteMetrics, type InsertWasteMetrics, UserRole, PickupStatus
 } from "@shared/schema";
+import { db } from "./db";
+import { eq, and, gte, lte } from "drizzle-orm";
 
 export interface IStorage {
   // User operations
@@ -48,208 +50,159 @@ export interface IStorage {
   }>;
 }
 
-export class MemStorage implements IStorage {
-  private users: Map<number, User>;
-  private pickupRequests: Map<number, PickupRequest>;
-  private collections: Map<number, Collection>;
-  private illegalDumpingReports: Map<number, IllegalDumpingReport>;
-  private wasteMetrics: Map<number, WasteMetrics>;
-  private currentId: number;
-
-  constructor() {
-    this.users = new Map();
-    this.pickupRequests = new Map();
-    this.collections = new Map();
-    this.illegalDumpingReports = new Map();
-    this.wasteMetrics = new Map();
-    this.currentId = 1;
-
-    // Initialize with sample users
-    this.initializeSampleData();
-  }
-
-  private async initializeSampleData() {
-    // Create sample resident
-    await this.createUser({
-      username: "john_kamau",
-      password: "password123",
-      role: UserRole.RESIDENT,
-      fullName: "John Kamau",
-      phone: "+254712345678",
-      location: "Westlands, Nairobi"
-    });
-
-    // Create sample collector
-    await this.createUser({
-      username: "david_mwangi",
-      password: "password123",
-      role: UserRole.COLLECTOR,
-      fullName: "David Mwangi",
-      phone: "+254798765432",
-      location: "Nairobi"
-    });
-  }
-
+export class DatabaseStorage implements IStorage {
   async getUser(id: number): Promise<User | undefined> {
-    return this.users.get(id);
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user || undefined;
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(user => user.username === username);
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user || undefined;
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
-    const id = this.currentId++;
-    const user: User = {
-      ...insertUser,
-      id,
-      phone: insertUser.phone || null,
-      location: insertUser.location || null,
-      createdAt: new Date()
-    };
-    this.users.set(id, user);
+    const [user] = await db
+      .insert(users)
+      .values(insertUser)
+      .returning();
     return user;
   }
 
   async getPickupRequests(filters?: { residentId?: number; collectorId?: number; status?: string }): Promise<PickupRequest[]> {
-    let requests = Array.from(this.pickupRequests.values());
+    let query = db.select().from(pickupRequests);
     
+    const conditions = [];
     if (filters?.residentId) {
-      requests = requests.filter(r => r.residentId === filters.residentId);
+      conditions.push(eq(pickupRequests.residentId, filters.residentId));
     }
     if (filters?.collectorId) {
-      requests = requests.filter(r => r.collectorId === filters.collectorId);
+      conditions.push(eq(pickupRequests.collectorId, filters.collectorId));
     }
     if (filters?.status) {
-      requests = requests.filter(r => r.status === filters.status);
+      conditions.push(eq(pickupRequests.status, filters.status));
     }
     
+    if (conditions.length > 0) {
+      query = query.where(and(...conditions));
+    }
+    
+    const requests = await query;
     return requests.sort((a, b) => (b.createdAt?.getTime() || 0) - (a.createdAt?.getTime() || 0));
   }
 
   async getPickupRequest(id: number): Promise<PickupRequest | undefined> {
-    return this.pickupRequests.get(id);
+    const [request] = await db.select().from(pickupRequests).where(eq(pickupRequests.id, id));
+    return request || undefined;
   }
 
   async createPickupRequest(insertRequest: InsertPickupRequest): Promise<PickupRequest> {
-    const id = this.currentId++;
-    const request: PickupRequest = {
-      ...insertRequest,
-      id,
-      collectorId: insertRequest.collectorId || null,
-      latitude: insertRequest.latitude || null,
-      longitude: insertRequest.longitude || null,
-      scheduledTime: insertRequest.scheduledTime || null,
-      totalPrice: insertRequest.totalPrice || null,
-      actualWeight: insertRequest.actualWeight || null,
-      notes: insertRequest.notes || null,
-      status: insertRequest.status || 'pending',
-      createdAt: new Date(),
-      completedAt: null
-    };
-    this.pickupRequests.set(id, request);
+    const [request] = await db
+      .insert(pickupRequests)
+      .values(insertRequest)
+      .returning();
     return request;
   }
 
   async updatePickupRequest(id: number, updates: Partial<PickupRequest>): Promise<PickupRequest | undefined> {
-    const request = this.pickupRequests.get(id);
-    if (!request) return undefined;
-    
-    const updatedRequest = { ...request, ...updates };
-    this.pickupRequests.set(id, updatedRequest);
-    return updatedRequest;
+    const [request] = await db
+      .update(pickupRequests)
+      .set(updates)
+      .where(eq(pickupRequests.id, id))
+      .returning();
+    return request || undefined;
   }
 
   async getCollections(filters?: { userId?: number; period?: string }): Promise<Collection[]> {
-    let collections = Array.from(this.collections.values());
+    let query = db.select().from(collections);
     
     if (filters?.userId) {
-      collections = collections.filter(c => c.residentId === filters.userId || c.collectorId === filters.userId);
+      query = query.where(
+        and(
+          eq(collections.residentId, filters.userId),
+          eq(collections.collectorId, filters.userId)
+        )
+      );
     }
     
-    return collections.sort((a, b) => (b.createdAt?.getTime() || 0) - (a.createdAt?.getTime() || 0));
+    const results = await query;
+    return results.sort((a, b) => (b.createdAt?.getTime() || 0) - (a.createdAt?.getTime() || 0));
   }
 
   async createCollection(insertCollection: InsertCollection): Promise<Collection> {
-    const id = this.currentId++;
-    const collection: Collection = {
-      ...insertCollection,
-      id,
-      rating: insertCollection.rating || null,
-      feedback: insertCollection.feedback || null,
-      co2Saved: insertCollection.co2Saved || null,
-      createdAt: new Date()
-    };
-    this.collections.set(id, collection);
+    const [collection] = await db
+      .insert(collections)
+      .values(insertCollection)
+      .returning();
     return collection;
   }
 
   async getIllegalDumpingReports(filters?: { reporterId?: number; status?: string }): Promise<IllegalDumpingReport[]> {
-    let reports = Array.from(this.illegalDumpingReports.values());
+    let query = db.select().from(illegalDumpingReports);
     
+    const conditions = [];
     if (filters?.reporterId) {
-      reports = reports.filter(r => r.reporterId === filters.reporterId);
+      conditions.push(eq(illegalDumpingReports.reporterId, filters.reporterId));
     }
     if (filters?.status) {
-      reports = reports.filter(r => r.status === filters.status);
+      conditions.push(eq(illegalDumpingReports.status, filters.status));
     }
     
+    if (conditions.length > 0) {
+      query = query.where(and(...conditions));
+    }
+    
+    const reports = await query;
     return reports.sort((a, b) => (b.createdAt?.getTime() || 0) - (a.createdAt?.getTime() || 0));
   }
 
   async createIllegalDumpingReport(insertReport: InsertIllegalDumpingReport): Promise<IllegalDumpingReport> {
-    const id = this.currentId++;
-    const report: IllegalDumpingReport = {
-      ...insertReport,
-      id,
-      status: insertReport.status || 'reported',
-      photoUrl: insertReport.photoUrl || null,
-      createdAt: new Date()
-    };
-    this.illegalDumpingReports.set(id, report);
+    const [report] = await db
+      .insert(illegalDumpingReports)
+      .values(insertReport)
+      .returning();
     return report;
   }
 
   async getWasteMetrics(userId: number, period?: string): Promise<WasteMetrics[]> {
-    let metrics = Array.from(this.wasteMetrics.values()).filter(m => m.userId === userId);
+    let query = db.select().from(wasteMetrics).where(eq(wasteMetrics.userId, userId));
     
     if (period) {
-      metrics = metrics.filter(m => m.period === period);
+      query = query.where(and(
+        eq(wasteMetrics.userId, userId),
+        eq(wasteMetrics.period, period)
+      ));
     }
     
+    const metrics = await query;
     return metrics.sort((a, b) => b.periodDate.getTime() - a.periodDate.getTime());
   }
 
   async upsertWasteMetrics(insertMetrics: InsertWasteMetrics): Promise<WasteMetrics> {
-    // Find existing metric for the same user and period
-    const existing = Array.from(this.wasteMetrics.values()).find(
-      m => m.userId === insertMetrics.userId && 
-           m.period === insertMetrics.period &&
-           m.periodDate.getTime() === insertMetrics.periodDate.getTime()
-    );
+    // Try to find existing metric
+    const [existing] = await db
+      .select()
+      .from(wasteMetrics)
+      .where(and(
+        eq(wasteMetrics.userId, insertMetrics.userId),
+        eq(wasteMetrics.period, insertMetrics.period),
+        eq(wasteMetrics.periodDate, insertMetrics.periodDate)
+      ))
+      .limit(1);
 
     if (existing) {
-      const updated = { ...existing, ...insertMetrics };
-      this.wasteMetrics.set(existing.id, updated);
+      const [updated] = await db
+        .update(wasteMetrics)
+        .set(insertMetrics)
+        .where(eq(wasteMetrics.id, existing.id))
+        .returning();
       return updated;
     } else {
-      const id = this.currentId++;
-      const metrics: WasteMetrics = { 
-        ...insertMetrics, 
-        id,
-        organicWeight: insertMetrics.organicWeight || null,
-        plasticWeight: insertMetrics.plasticWeight || null,
-        paperWeight: insertMetrics.paperWeight || null,
-        metalWeight: insertMetrics.metalWeight || null,
-        glassWeight: insertMetrics.glassWeight || null,
-        electronicWeight: insertMetrics.electronicWeight || null,
-        totalWeight: insertMetrics.totalWeight || null,
-        totalEarnings: insertMetrics.totalEarnings || null,
-        co2Saved: insertMetrics.co2Saved || null,
-        recyclingRate: insertMetrics.recyclingRate || null
-      };
-      this.wasteMetrics.set(id, metrics);
-      return metrics;
+      const [newMetrics] = await db
+        .insert(wasteMetrics)
+        .values(insertMetrics)
+        .returning();
+      return newMetrics;
     }
   }
 
