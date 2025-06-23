@@ -24,7 +24,7 @@
   --ring: hsl(20, 14.3%, 4.1%);
   --radius: 0.5rem;
   
-  /* EcoCollect specific colors */
+  /* EcoCollect specific colors - Light Mode */
   --eco-green: hsl(142, 71%, 45%);
   --eco-green-dark: hsl(142, 71%, 35%);
   --eco-orange: hsl(24, 95%, 53%);
@@ -54,6 +54,14 @@
   --destructive-foreground: hsl(0, 0%, 98%);
   --ring: hsl(240, 4.9%, 83.9%);
   --radius: 0.5rem;
+  
+  /* EcoCollect specific colors - Dark Mode */
+  --eco-green: hsl(142, 71%, 55%);
+  --eco-green-dark: hsl(142, 71%, 45%);
+  --eco-orange: hsl(24, 95%, 63%);
+  --eco-gray: hsl(215, 15%, 75%);
+  --eco-dark: hsl(0, 0%, 98%);
+  --eco-light: hsl(240, 5%, 10%);
 }
 
 @layer base {

@@ -4,6 +4,7 @@ import { Plus, Clock, Camera, ChevronRight, Bell, User, Leaf, Recycle } from 'lu
 import { Link, useLocation } from 'wouter';
 import { useAuth } from '@/lib/auth';
 import BottomNav from '@/components/bottom-nav';
+import { ThemeToggle } from '@/components/theme-toggle';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -71,20 +72,23 @@ export default function ResidentDashboard() {
   return (
     <div className="pb-20">
       {/* Header */}
-      <div className="bg-white p-4 shadow-sm border-b">
+      <div className="bg-background border-b border-border p-4 shadow-sm">
         <div className="flex items-center justify-between">
           <div className="flex items-center">
             <div className="w-10 h-10 bg-eco-green rounded-full flex items-center justify-center mr-3">
               <User className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h3 className="font-semibold text-eco-dark">{user.fullName}</h3>
-              <p className="text-sm text-eco-gray">Resident</p>
+              <h3 className="font-semibold text-foreground">{user.fullName}</h3>
+              <p className="text-sm text-muted-foreground">Resident</p>
             </div>
           </div>
-          <button className="p-2">
-            <Bell className="w-5 h-5 text-eco-gray" />
-          </button>
+          <div className="flex items-center space-x-2">
+            <ThemeToggle />
+            <button className="p-2">
+              <Bell className="w-5 h-5 text-muted-foreground" />
+            </button>
+          </div>
         </div>
       </div>
 

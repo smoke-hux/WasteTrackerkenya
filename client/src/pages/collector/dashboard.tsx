@@ -4,6 +4,7 @@ import { Truck, MapPin, Weight, Route, Clock, Navigation } from 'lucide-react';
 import { Link, useLocation } from 'wouter';
 import { useAuth } from '@/lib/auth';
 import BottomNav from '@/components/bottom-nav';
+import { ThemeToggle } from '@/components/theme-toggle';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -77,20 +78,23 @@ export default function CollectorDashboard() {
   return (
     <div className="pb-20">
       {/* Header */}
-      <div className="bg-white p-4 shadow-sm border-b">
+      <div className="bg-background border-b border-border p-4 shadow-sm">
         <div className="flex items-center justify-between">
           <div className="flex items-center">
             <div className="w-10 h-10 bg-eco-orange rounded-full flex items-center justify-center mr-3">
               <Truck className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h3 className="font-semibold text-eco-dark">{user.fullName}</h3>
-              <p className="text-sm text-eco-gray">Collector</p>
+              <h3 className="font-semibold text-foreground">{user.fullName}</h3>
+              <p className="text-sm text-muted-foreground">Collector</p>
             </div>
           </div>
           <div className="flex items-center space-x-2">
-            <div className="w-3 h-3 bg-eco-green rounded-full"></div>
-            <span className="text-sm text-eco-gray">Online</span>
+            <ThemeToggle />
+            <div className="flex items-center space-x-2">
+              <div className="w-3 h-3 bg-eco-green rounded-full"></div>
+              <span className="text-sm text-muted-foreground">Online</span>
+            </div>
           </div>
         </div>
       </div>
