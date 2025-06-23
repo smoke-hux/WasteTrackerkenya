@@ -70,8 +70,6 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getPickupRequests(filters?: { residentId?: number; collectorId?: number; status?: string }): Promise<PickupRequest[]> {
-    let query = db.select().from(pickupRequests);
-    
     const conditions = [];
     if (filters?.residentId) {
       conditions.push(eq(pickupRequests.residentId, filters.residentId));
@@ -83,11 +81,10 @@ export class DatabaseStorage implements IStorage {
       conditions.push(eq(pickupRequests.status, filters.status));
     }
     
-    if (conditions.length > 0) {
-      query = query.where(and(...conditions));
-    }
+    const requests = conditions.length > 0 
+      ? await db.select().from(pickupRequests).where(and(...conditions))
+      : await db.select().from(pickupRequests);
     
-    const requests = await query;
     return requests.sort((a, b) => (b.createdAt?.getTime() || 0) - (a.createdAt?.getTime() || 0));
   }
 
@@ -114,18 +111,15 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getCollections(filters?: { userId?: number; period?: string }): Promise<Collection[]> {
-    let query = db.select().from(collections);
-    
-    if (filters?.userId) {
-      query = query.where(
-        and(
-          eq(collections.residentId, filters.userId),
-          eq(collections.collectorId, filters.userId)
+    const results = filters?.userId 
+      ? await db.select().from(collections).where(
+          and(
+            eq(collections.residentId, filters.userId),
+            eq(collections.collectorId, filters.userId)
+          )
         )
-      );
-    }
+      : await db.select().from(collections);
     
-    const results = await query;
     return results.sort((a, b) => (b.createdAt?.getTime() || 0) - (a.createdAt?.getTime() || 0));
   }
 
@@ -138,8 +132,6 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getIllegalDumpingReports(filters?: { reporterId?: number; status?: string }): Promise<IllegalDumpingReport[]> {
-    let query = db.select().from(illegalDumpingReports);
-    
     const conditions = [];
     if (filters?.reporterId) {
       conditions.push(eq(illegalDumpingReports.reporterId, filters.reporterId));
@@ -148,11 +140,10 @@ export class DatabaseStorage implements IStorage {
       conditions.push(eq(illegalDumpingReports.status, filters.status));
     }
     
-    if (conditions.length > 0) {
-      query = query.where(and(...conditions));
-    }
+    const reports = conditions.length > 0 
+      ? await db.select().from(illegalDumpingReports).where(and(...conditions))
+      : await db.select().from(illegalDumpingReports);
     
-    const reports = await query;
     return reports.sort((a, b) => (b.createdAt?.getTime() || 0) - (a.createdAt?.getTime() || 0));
   }
 
@@ -165,16 +156,13 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getWasteMetrics(userId: number, period?: string): Promise<WasteMetrics[]> {
-    let query = db.select().from(wasteMetrics).where(eq(wasteMetrics.userId, userId));
+    const conditions = [eq(wasteMetrics.userId, userId)];
     
     if (period) {
-      query = query.where(and(
-        eq(wasteMetrics.userId, userId),
-        eq(wasteMetrics.period, period)
-      ));
+      conditions.push(eq(wasteMetrics.period, period));
     }
     
-    const metrics = await query;
+    const metrics = await db.select().from(wasteMetrics).where(and(...conditions));
     return metrics.sort((a, b) => b.periodDate.getTime() - a.periodDate.getTime());
   }
 
@@ -207,18 +195,18 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getResidentDashboardData(userId: number) {
-    const collections = await this.getCollections({ userId });
+    const userCollections = await this.getCollections({ userId });
     const activePickups = await this.getPickupRequests({ 
       residentId: userId, 
       status: PickupStatus.PENDING 
     });
 
-    const totalCollected = collections.reduce((sum, c) => sum + parseFloat(c.weight || '0'), 0);
-    const totalEarnings = collections.reduce((sum, c) => sum + parseFloat(c.price || '0'), 0);
-    const co2Saved = collections.reduce((sum, c) => sum + parseFloat(c.co2Saved || '0'), 0);
+    const totalCollected = userCollections.reduce((sum, c) => sum + parseFloat(c.weight || '0'), 0);
+    const totalEarnings = userCollections.reduce((sum, c) => sum + parseFloat(c.price || '0'), 0);
+    const co2Saved = userCollections.reduce((sum, c) => sum + parseFloat(c.co2Saved || '0'), 0);
     
     // Calculate recycling rate (simplified - percentage of non-organic waste)
-    const totalOrganic = collections.reduce((sum, c) => {
+    const totalOrganic = userCollections.reduce((sum, c) => {
       return sum + (c.wasteTypes.includes('organic') ? parseFloat(c.weight || '0') : 0);
     }, 0);
     const recyclingRate = totalCollected > 0 ? ((totalCollected - totalOrganic) / totalCollected) * 100 : 0;
@@ -229,7 +217,7 @@ export class DatabaseStorage implements IStorage {
       co2Saved,
       recyclingRate,
       activePickups: activePickups.slice(0, 5),
-      recentCollections: collections.slice(0, 10)
+      recentCollections: userCollections.slice(0, 10)
     };
   }
 
@@ -237,11 +225,13 @@ export class DatabaseStorage implements IStorage {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     
-    const todayCollections = Array.from(this.collections.values()).filter(
-      c => c.collectorId === userId && 
-           c.createdAt && 
-           c.createdAt >= today
-    );
+    const todayCollections = await db
+      .select()
+      .from(collections)
+      .where(and(
+        eq(collections.collectorId, userId),
+        gte(collections.createdAt, today)
+      ));
 
     const availableJobs = await this.getPickupRequests({ status: PickupStatus.PENDING });
     const activeJob = (await this.getPickupRequests({ 
@@ -263,4 +253,4 @@ export class DatabaseStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+export const storage = new DatabaseStorage();
