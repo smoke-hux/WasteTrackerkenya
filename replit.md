@@ -82,6 +82,7 @@ The application follows a modern full-stack architecture with:
 Changelog:
 - June 23, 2025. Initial setup
 - June 23, 2025. Added comprehensive dark/light mode theme system with toggle functionality
+- June 23, 2025. Rebranded application from "EcoCollect" to "YUGI"
 
 ## User Preferences
 
