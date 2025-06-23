@@ -202,6 +202,8 @@ export class MemStorage implements IStorage {
     const report: IllegalDumpingReport = {
       ...insertReport,
       id,
+      status: insertReport.status || 'reported',
+      photoUrl: insertReport.photoUrl || null,
       createdAt: new Date()
     };
     this.illegalDumpingReports.set(id, report);
@@ -232,7 +234,20 @@ export class MemStorage implements IStorage {
       return updated;
     } else {
       const id = this.currentId++;
-      const metrics: WasteMetrics = { ...insertMetrics, id };
+      const metrics: WasteMetrics = { 
+        ...insertMetrics, 
+        id,
+        organicWeight: insertMetrics.organicWeight || null,
+        plasticWeight: insertMetrics.plasticWeight || null,
+        paperWeight: insertMetrics.paperWeight || null,
+        metalWeight: insertMetrics.metalWeight || null,
+        glassWeight: insertMetrics.glassWeight || null,
+        electronicWeight: insertMetrics.electronicWeight || null,
+        totalWeight: insertMetrics.totalWeight || null,
+        totalEarnings: insertMetrics.totalEarnings || null,
+        co2Saved: insertMetrics.co2Saved || null,
+        recyclingRate: insertMetrics.recyclingRate || null
+      };
       this.wasteMetrics.set(id, metrics);
       return metrics;
     }
