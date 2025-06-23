@@ -103,6 +103,8 @@ export class MemStorage implements IStorage {
     const user: User = {
       ...insertUser,
       id,
+      phone: insertUser.phone || null,
+      location: insertUser.location || null,
       createdAt: new Date()
     };
     this.users.set(id, user);
@@ -134,7 +136,16 @@ export class MemStorage implements IStorage {
     const request: PickupRequest = {
       ...insertRequest,
       id,
-      createdAt: new Date()
+      collectorId: insertRequest.collectorId || null,
+      latitude: insertRequest.latitude || null,
+      longitude: insertRequest.longitude || null,
+      scheduledTime: insertRequest.scheduledTime || null,
+      totalPrice: insertRequest.totalPrice || null,
+      actualWeight: insertRequest.actualWeight || null,
+      notes: insertRequest.notes || null,
+      status: insertRequest.status || 'pending',
+      createdAt: new Date(),
+      completedAt: null
     };
     this.pickupRequests.set(id, request);
     return request;
@@ -164,6 +175,9 @@ export class MemStorage implements IStorage {
     const collection: Collection = {
       ...insertCollection,
       id,
+      rating: insertCollection.rating || null,
+      feedback: insertCollection.feedback || null,
+      co2Saved: insertCollection.co2Saved || null,
       createdAt: new Date()
     };
     this.collections.set(id, collection);
