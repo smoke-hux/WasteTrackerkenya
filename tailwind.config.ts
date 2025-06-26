@@ -2,7 +2,11 @@ import type { Config } from "tailwindcss";
 
 export default {
   darkMode: ["class"],
-  content: ["./client/index.html", "./client/src/**/*.{js,jsx,ts,tsx}"],
+  content: [
+    "./pages/**/*.{js,ts,jsx,tsx,mdx}",
+    "./components/**/*.{js,ts,jsx,tsx,mdx}",
+    "./app/**/*.{js,ts,jsx,tsx,mdx}",
+  ],
   theme: {
     extend: {
       borderRadius: {
@@ -61,6 +65,13 @@ export default {
           border: "var(--sidebar-border)",
           ring: "var(--sidebar-ring)",
         },
+        "eco-green": {
+          DEFAULT: "#22c55e",
+          dark: "#16a34a",
+        },
+        "eco-orange": "#f97316",
+        "eco-dark": "#1f2937",
+        "eco-gray": "#6b7280",
       },
       keyframes: {
         "accordion-down": {

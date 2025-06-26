@@ -4,13 +4,16 @@ import { z } from "zod";
 
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
-  username: text("username").notNull().unique(),
-  password: text("password").notNull(),
+  email: text("email").notNull().unique(),
+  password: text("password").notNull(), // This will store hashed passwords
   role: varchar("role", { length: 20 }).notNull(), // 'resident' or 'collector'
   fullName: text("full_name").notNull(),
   phone: text("phone"),
   location: text("location"),
+  isActive: boolean("is_active").default(true),
+  lastLoginAt: timestamp("last_login_at"),
   createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 export const pickupRequests = pgTable("pickup_requests", {

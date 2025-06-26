@@ -1,6 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
+import { AuthService } from "./auth";
 import { 
   insertUserSchema, insertPickupRequestSchema, insertCollectionSchema, 
   insertIllegalDumpingReportSchema, insertWasteMetricsSchema,
@@ -13,32 +14,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Auth endpoints
   app.post("/api/auth/login", async (req, res) => {
     try {
-      const { username, password } = req.body;
-      const user = await storage.getUserByUsername(username);
+      const { email, password } = req.body;
       
-      if (!user || user.password !== password) {
-        return res.status(401).json({ message: "Invalid credentials" });
+      console.log('Login attempt for:', email); // Debug log
+      
+      if (!email || !password) {
+        return res.status(400).json({ message: "Email and password are required" });
       }
-      
-      res.json({ user: { ...user, password: undefined } });
+
+      const user = await AuthService.loginUser({ email, password });
+      console.log('Login successful for:', user.email); // Debug log
+      res.json({ user });
     } catch (error) {
-      res.status(500).json({ message: "Login failed" });
+      console.error('Login error:', error); // Debug log
+      const message = error instanceof Error ? error.message : "Login failed";
+      res.status(401).json({ message });
     }
   });
 
   app.post("/api/auth/register", async (req, res) => {
     try {
-      const userData = insertUserSchema.parse(req.body);
-      const existingUser = await storage.getUserByUsername(userData.username);
+      const { email, password, fullName, phone, location, role } = req.body;
       
-      if (existingUser) {
-        return res.status(400).json({ message: "Username already exists" });
+      // Validate required fields
+      if (!email || !password || !fullName || !role) {
+        return res.status(400).json({ 
+          message: "Email, password, full name, and role are required" 
+        });
       }
-      
-      const user = await storage.createUser(userData);
-      res.json({ user: { ...user, password: undefined } });
+
+      // Validate role
+      if (!['resident', 'collector'].includes(role)) {
+        return res.status(400).json({ message: "Role must be 'resident' or 'collector'" });
+      }
+
+      const user = await AuthService.registerUser({
+        email,
+        password,
+        fullName,
+        phone: phone || '',
+        location: location || '',
+        role
+      });
+
+      res.status(201).json({ user });
     } catch (error) {
-      res.status(400).json({ message: "Registration failed" });
+      const message = error instanceof Error ? error.message : "Registration failed";
+      res.status(400).json({ message });
     }
   });
 
@@ -80,6 +102,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/pickup-requests", async (req, res) => {
     try {
+      console.log('Pickup request received:', req.body); // Debug log
+      
+      // Convert scheduledTime string to Date if needed
+      if (req.body.scheduledTime && typeof req.body.scheduledTime === 'string') {
+        req.body.scheduledTime = new Date(req.body.scheduledTime);
+      }
+      
       const requestData = insertPickupRequestSchema.parse(req.body);
       
       // Calculate pricing based on waste types and weight
@@ -93,9 +122,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         status: PickupStatus.PENDING
       });
       
+      console.log('Pickup request created:', request); // Debug log
       res.json(request);
     } catch (error) {
-      res.status(400).json({ message: "Failed to create pickup request" });
+      console.error('Pickup request error:', error); // Debug log
+      if (error instanceof Error) {
+        res.status(400).json({ message: error.message, details: error.stack });
+      } else {
+        res.status(400).json({ message: "Failed to create pickup request", error: String(error) });
+      }
     }
   });
 
