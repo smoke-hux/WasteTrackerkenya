@@ -7,6 +7,7 @@ import {
   insertIllegalDumpingReportSchema, insertWasteMetricsSchema,
   PickupStatus, WasteType
 } from "@shared/schema";
+import { EnvironmentalService } from "./environmental-service";
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -44,8 +45,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Validate role
-      if (!['resident', 'collector'].includes(role)) {
-        return res.status(400).json({ message: "Role must be 'resident' or 'collector'" });
+      if (!['resident', 'collector', 'admin'].includes(role)) {
+        return res.status(400).json({ message: "Role must be 'resident', 'collector', or 'admin'" });
       }
 
       const user = await AuthService.registerUser({
@@ -183,6 +184,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
           completedAt: new Date()
         });
       }
+
+      // Update environmental progress and check for achievements
+      await EnvironmentalService.updateUserProgress(collection.residentId, {
+        weight: parseFloat(collectionData.weight),
+        co2Saved: co2Saved
+      });
       
       res.json(collection);
     } catch (error) {
@@ -255,6 +262,125 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       res.status(400).json({ message: "Failed to calculate price" });
+    }
+  });
+
+  // Environmental achievement endpoints
+  app.get("/api/environmental/achievements/:userId", async (req, res) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      const achievements = await EnvironmentalService.getUserAchievements(userId);
+      res.json(achievements);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch achievements" });
+    }
+  });
+
+  app.get("/api/environmental/progress/:userId", async (req, res) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      const progress = await EnvironmentalService.getUserProgress(userId);
+      res.json(progress);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch environmental progress" });
+    }
+  });
+
+  app.get("/api/environmental/info/:userId", async (req, res) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      const userProgress = await EnvironmentalService.getUserProgress(userId);
+      const userLevel = Math.floor((userProgress?.achievementPoints || 0) / 10); // Level = points / 10
+      const environmentalInfo = await EnvironmentalService.getAvailableEnvironmentalInfo(userLevel);
+      res.json(environmentalInfo);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch environmental information" });
+    }
+  });
+
+  // Admin endpoints - CRUD operations for all tables
+  app.get("/api/admin/users", async (req, res) => {
+    try {
+      const users = await storage.getAllUsers();
+      res.json(users);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch users" });
+    }
+  });
+
+  app.get("/api/admin/pickup-requests", async (req, res) => {
+    try {
+      const requests = await storage.getAllPickupRequests();
+      res.json(requests);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch pickup requests" });
+    }
+  });
+
+  app.get("/api/admin/collections", async (req, res) => {
+    try {
+      const collections = await storage.getAllCollections();
+      res.json(collections);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch collections" });
+    }
+  });
+
+  app.get("/api/admin/dumping-reports", async (req, res) => {
+    try {
+      const reports = await storage.getAllDumpingReports();
+      res.json(reports);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch dumping reports" });
+    }
+  });
+
+  app.get("/api/admin/environmental-achievements", async (req, res) => {
+    try {
+      const achievements = await storage.getAllEnvironmentalAchievements();
+      res.json(achievements);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch environmental achievements" });
+    }
+  });
+
+  app.put("/api/admin/users/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const user = await storage.updateUser(id, req.body);
+      res.json(user);
+    } catch (error) {
+      res.status(400).json({ message: "Failed to update user" });
+    }
+  });
+
+  app.delete("/api/admin/users/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      await storage.deleteUser(id);
+      res.json({ message: "User deleted successfully" });
+    } catch (error) {
+      res.status(400).json({ message: "Failed to delete user" });
+    }
+  });
+
+  app.put("/api/admin/pickup-requests/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const request = await storage.updatePickupRequest(id, req.body);
+      res.json(request);
+    } catch (error) {
+      res.status(400).json({ message: "Failed to update pickup request" });
+    }
+  });
+
+  app.delete("/api/admin/pickup-requests/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      await storage.deletePickupRequest(id);
+      res.json({ message: "Pickup request deleted successfully" });
+    } catch (error) {
+      res.status(400).json({ message: "Failed to delete pickup request" });
     }
   });
 

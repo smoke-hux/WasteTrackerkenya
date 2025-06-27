@@ -1,9 +1,9 @@
-import { Home, Map, BarChart3, User, Truck, TrendingUp } from 'lucide-react';
+import { Home, Map, BarChart3, User, Truck, TrendingUp, Award } from 'lucide-react';
 import { Link, useLocation } from 'wouter';
 import { useAuth } from '@/lib/auth';
 
 interface BottomNavProps {
-  userRole: 'resident' | 'collector';
+  userRole: 'resident' | 'collector' | 'admin';
 }
 
 export default function BottomNav({ userRole }: BottomNavProps) {
@@ -12,6 +12,7 @@ export default function BottomNav({ userRole }: BottomNavProps) {
   const residentNavItems = [
     { path: '/resident/dashboard', icon: Home, label: 'Home' },
     { path: '/map', icon: Map, label: 'Map' },
+    { path: '/resident/environmental-rewards', icon: Award, label: 'Rewards' },
     { path: '/resident/analytics', icon: BarChart3, label: 'Analytics' },
     { path: '/profile', icon: User, label: 'Profile' },
   ];
@@ -23,7 +24,13 @@ export default function BottomNav({ userRole }: BottomNavProps) {
     { path: '/profile', icon: User, label: 'Profile' },
   ];
 
-  const navItems = userRole === 'resident' ? residentNavItems : collectorNavItems;
+  const adminNavItems = [
+    { path: '/admin', icon: BarChart3, label: 'Admin' },
+    { path: '/profile', icon: User, label: 'Profile' },
+  ];
+
+  const navItems = userRole === 'resident' ? residentNavItems : 
+                   userRole === 'collector' ? collectorNavItems : adminNavItems;
 
   return (
     <div className="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-md bg-background border-t border-border px-4 py-2">
@@ -39,7 +46,9 @@ export default function BottomNav({ userRole }: BottomNavProps) {
                   isActive 
                     ? userRole === 'resident' 
                       ? 'text-eco-green' 
-                      : 'text-eco-orange'
+                      : userRole === 'collector'
+                      ? 'text-eco-orange'
+                      : 'text-blue-600'
                     : 'text-muted-foreground'
                 }`}
               >

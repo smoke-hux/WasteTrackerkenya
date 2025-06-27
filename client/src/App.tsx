@@ -12,8 +12,10 @@ import CollectorDashboard from "./pages/collector/dashboard";
 import RequestPickup from "./pages/resident/request-pickup";
 import Analytics from "./pages/resident/analytics";
 import ReportDumping from "./pages/resident/report-dumping";
+import EnvironmentalRewards from "./pages/resident/environmental-rewards";
 import ActiveCollection from "./pages/collector/active-collection";
 import MapView from "./pages/map-view";
+import Profile from "./pages/profile";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -26,8 +28,10 @@ function Router() {
       <Route path="/resident/request-pickup" component={RequestPickup} />
       <Route path="/resident/analytics" component={Analytics} />
       <Route path="/resident/report-dumping" component={ReportDumping} />
+      <Route path="/resident/environmental-rewards" component={EnvironmentalRewards} />
       <Route path="/collector/active-collection/:id?" component={ActiveCollection} />
       <Route path="/map" component={MapView} />
+      <Route path="/profile" component={Profile} />
       <Route component={NotFound} />
     </Switch>
   );

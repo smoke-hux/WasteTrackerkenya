@@ -1,13 +1,14 @@
 export interface User {
   id: number;
   email: string;
-  role: 'resident' | 'collector';
+  role: 'resident' | 'collector' | 'admin';
   fullName: string;
   phone?: string;
   location?: string;
   isActive?: boolean;
   lastLoginAt?: string;
   createdAt?: string;
+  name?: string; // For compatibility with auth context
 }
 
 export interface ResidentDashboardData {

@@ -79,6 +79,46 @@ export const wasteMetrics = pgTable("waste_metrics", {
   recyclingRate: decimal("recycling_rate", { precision: 5, scale: 2 }).default('0'),
 });
 
+export const environmentalAchievements = pgTable("environmental_achievements", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  achievementType: varchar("achievement_type", { length: 50 }).notNull(), // 'waste_milestone', 'co2_milestone', 'consistency', 'diversity'
+  level: integer("level").notNull(), // 1-10 achievement levels
+  title: text("title").notNull(),
+  description: text("description").notNull(),
+  environmentalInfo: text("environmental_info").notNull(), // The educational content unlocked
+  iconUrl: text("icon_url"),
+  unlockedAt: timestamp("unlocked_at").defaultNow(),
+  wasteThreshold: decimal("waste_threshold", { precision: 8, scale: 2 }), // kg threshold for this achievement
+  co2Threshold: decimal("co2_threshold", { precision: 8, scale: 2 }), // CO2 threshold for this achievement
+});
+
+export const userEnvironmentalProgress = pgTable("user_environmental_progress", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull().unique(),
+  totalWasteCollected: decimal("total_waste_collected", { precision: 10, scale: 2 }).default('0'),
+  totalCo2Saved: decimal("total_co2_saved", { precision: 10, scale: 2 }).default('0'),
+  currentStreak: integer("current_streak").default(0), // days of consecutive waste collection
+  longestStreak: integer("longest_streak").default(0),
+  lastCollectionDate: timestamp("last_collection_date"),
+  achievementPoints: integer("achievement_points").default(0),
+  unlockedInfoCount: integer("unlocked_info_count").default(0), // number of environmental info pieces unlocked
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const environmentalInfoLibrary = pgTable("environmental_info_library", {
+  id: serial("id").primaryKey(),
+  category: varchar("category", { length: 50 }).notNull(), // 'recycling', 'climate', 'wildlife', 'pollution', 'conservation'
+  title: text("title").notNull(),
+  content: text("content").notNull(),
+  difficulty: varchar("difficulty", { length: 20 }).notNull(), // 'beginner', 'intermediate', 'advanced'
+  unlockLevel: integer("unlock_level").notNull(), // Achievement level required to unlock
+  imageUrl: text("image_url"),
+  videoUrl: text("video_url"),
+  sources: text("sources").array(), // Array of source URLs/references
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
@@ -105,6 +145,22 @@ export const insertWasteMetricsSchema = createInsertSchema(wasteMetrics).omit({
   id: true,
 });
 
+// Insert schemas for environmental tables (must be after table definitions)
+export const insertEnvironmentalAchievementSchema = createInsertSchema(environmentalAchievements).omit({
+  id: true,
+  unlockedAt: true,
+});
+
+export const insertUserEnvironmentalProgressSchema = createInsertSchema(userEnvironmentalProgress).omit({
+  id: true,
+  updatedAt: true,
+});
+
+export const insertEnvironmentalInfoLibrarySchema = createInsertSchema(environmentalInfoLibrary).omit({
+  id: true,
+  createdAt: true,
+});
+
 // Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -116,11 +172,18 @@ export type IllegalDumpingReport = typeof illegalDumpingReports.$inferSelect;
 export type InsertIllegalDumpingReport = z.infer<typeof insertIllegalDumpingReportSchema>;
 export type WasteMetrics = typeof wasteMetrics.$inferSelect;
 export type InsertWasteMetrics = z.infer<typeof insertWasteMetricsSchema>;
+export type EnvironmentalAchievement = typeof environmentalAchievements.$inferSelect;
+export type InsertEnvironmentalAchievement = z.infer<typeof insertEnvironmentalAchievementSchema>;
+export type UserEnvironmentalProgress = typeof userEnvironmentalProgress.$inferSelect;
+export type InsertUserEnvironmentalProgress = z.infer<typeof insertUserEnvironmentalProgressSchema>;
+export type EnvironmentalInfoLibrary = typeof environmentalInfoLibrary.$inferSelect;
+export type InsertEnvironmentalInfoLibrary = z.infer<typeof insertEnvironmentalInfoLibrarySchema>;
 
 // Enums for type safety
 export const UserRole = {
   RESIDENT: 'resident' as const,
   COLLECTOR: 'collector' as const,
+  ADMIN: 'admin' as const,
 } as const;
 
 export const PickupStatus = {
@@ -144,4 +207,25 @@ export const UrgencyLevel = {
   LOW: 'low' as const,
   MEDIUM: 'medium' as const,
   HIGH: 'high' as const,
+} as const;
+
+export const AchievementType = {
+  WASTE_MILESTONE: 'waste_milestone' as const,
+  CO2_MILESTONE: 'co2_milestone' as const,
+  CONSISTENCY: 'consistency' as const,
+  DIVERSITY: 'diversity' as const,
+} as const;
+
+export const InfoCategory = {
+  RECYCLING: 'recycling' as const,
+  CLIMATE: 'climate' as const,
+  WILDLIFE: 'wildlife' as const,
+  POLLUTION: 'pollution' as const,
+  CONSERVATION: 'conservation' as const,
+} as const;
+
+export const InfoDifficulty = {
+  BEGINNER: 'beginner' as const,
+  INTERMEDIATE: 'intermediate' as const,
+  ADVANCED: 'advanced' as const,
 } as const;

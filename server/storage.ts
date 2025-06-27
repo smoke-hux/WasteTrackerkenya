@@ -1,8 +1,11 @@
 import { 
   users, pickupRequests, collections, illegalDumpingReports, wasteMetrics,
+  environmentalAchievements, userEnvironmentalProgress, environmentalInfoLibrary,
   type User, type InsertUser, type PickupRequest, type InsertPickupRequest,
   type Collection, type InsertCollection, type IllegalDumpingReport, type InsertIllegalDumpingReport,
-  type WasteMetrics, type InsertWasteMetrics, UserRole, PickupStatus
+  type WasteMetrics, type InsertWasteMetrics, type EnvironmentalAchievement,
+  type UserEnvironmentalProgress, type EnvironmentalInfoLibrary,
+  UserRole, PickupStatus
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, gte, lte } from "drizzle-orm";
@@ -56,8 +59,8 @@ export class DatabaseStorage implements IStorage {
     return user || undefined;
   }
 
-  async getUserByUsername(username: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.username, username));
+  async getUserByUsername(email: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.email, email));
     return user || undefined;
   }
 
@@ -250,6 +253,44 @@ export class DatabaseStorage implements IStorage {
       availableJobs: availableJobs.slice(0, 10),
       activeJob
     };
+  }
+
+  // Admin methods
+  async getAllUsers(): Promise<User[]> {
+    return await db.select().from(users);
+  }
+
+  async getAllPickupRequests(): Promise<PickupRequest[]> {
+    return await db.select().from(pickupRequests);
+  }
+
+  async getAllCollections(): Promise<Collection[]> {
+    return await db.select().from(collections);
+  }
+
+  async getAllDumpingReports(): Promise<IllegalDumpingReport[]> {
+    return await db.select().from(illegalDumpingReports);
+  }
+
+  async getAllEnvironmentalAchievements(): Promise<EnvironmentalAchievement[]> {
+    return await db.select().from(environmentalAchievements);
+  }
+
+  async updateUser(id: number, updates: Partial<User>): Promise<User | undefined> {
+    const [user] = await db
+      .update(users)
+      .set(updates)
+      .where(eq(users.id, id))
+      .returning();
+    return user || undefined;
+  }
+
+  async deleteUser(id: number): Promise<void> {
+    await db.delete(users).where(eq(users.id, id));
+  }
+
+  async deletePickupRequest(id: number): Promise<void> {
+    await db.delete(pickupRequests).where(eq(pickupRequests.id, id));
   }
 }
 

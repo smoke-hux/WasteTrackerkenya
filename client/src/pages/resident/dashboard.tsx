@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Plus, Clock, Camera, ChevronRight, Bell, User, Leaf, Recycle } from 'lucide-react';
+import { Plus, Clock, Camera, ChevronRight, Bell, User, Leaf, Recycle, Award } from 'lucide-react';
 import { Link, useLocation } from 'wouter';
 import { useAuth } from '@/lib/auth';
 import BottomNav from '@/components/bottom-nav';
@@ -142,6 +142,23 @@ export default function ResidentDashboard() {
             </Badge>
           </CardContent>
         </Card>
+
+        <Link href="/resident/environmental-rewards">
+          <Card className="hover:shadow-md transition-shadow cursor-pointer">
+            <CardContent className="p-6 flex items-center justify-between">
+              <div className="flex items-center">
+                <div className="w-12 h-12 bg-yellow-100 rounded-xl flex items-center justify-center mr-4">
+                  <Award className="w-5 h-5 text-yellow-600" />
+                </div>
+                <div className="text-left">
+                  <h3 className="font-semibold text-eco-dark">Environmental Rewards</h3>
+                  <p className="text-sm text-eco-gray">Learn and earn achievements</p>
+                </div>
+              </div>
+              <ChevronRight className="w-5 h-5 text-eco-gray" />
+            </CardContent>
+          </Card>
+        </Link>
 
         <Link href="/resident/report-dumping">
           <Card className="hover:shadow-md transition-shadow cursor-pointer">

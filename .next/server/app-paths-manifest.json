@@ -1,8 +1,1 @@
-{
-  "/resident/dashboard/page": "app/resident/dashboard/page.js",
-  "/resident/report-dumping/page": "app/resident/report-dumping/page.js",
-  "/resident/request-pickup/page": "app/resident/request-pickup/page.js",
-  "/map/page": "app/map/page.js",
-  "/resident/analytics/page": "app/resident/analytics/page.js",
-  "/_not-found/page": "app/_not-found/page.js"
-}
+{}
