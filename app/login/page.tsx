@@ -52,8 +52,8 @@ export default function LoginPage() {
         throw new Error(data.message || 'Authentication failed');
       }
 
-      // Login the user
-      login(data.user);
+      // Login the user with JWT tokens
+      login(data.user, data.accessToken, data.refreshToken);
 
       toast({
         title: isLogin ? "Welcome back!" : "Account created!",
@@ -244,16 +244,24 @@ export default function LoginPage() {
                 type="button"
                 variant="outline"
                 size="sm"
-                onClick={() => {
-                  login({
-                    id: 1,
-                    email: 'resident@demo.com',
-                    fullName: 'John Kamau',
-                    role: 'resident',
-                    phone: '+254712345678',
-                    location: 'Westlands, Nairobi'
-                  });
-                  router.push('/resident/dashboard');
+                onClick={async () => {
+                  try {
+                    const response = await fetch('/api/auth/login', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        email: 'resident@demo.com',
+                        password: 'demo123'
+                      })
+                    });
+                    const data = await response.json();
+                    if (response.ok) {
+                      login(data.user, data.accessToken, data.refreshToken);
+                      router.push('/resident/dashboard');
+                    }
+                  } catch (error) {
+                    console.error('Demo login failed:', error);
+                  }
                 }}
                 className="text-xs"
               >
@@ -263,16 +271,24 @@ export default function LoginPage() {
                 type="button"
                 variant="outline"
                 size="sm"
-                onClick={() => {
-                  login({
-                    id: 2,
-                    email: 'collector@demo.com',
-                    fullName: 'David Mwangi',
-                    role: 'collector',
-                    phone: '+254798765432',
-                    location: 'Nairobi'
-                  });
-                  router.push('/collector/dashboard');
+                onClick={async () => {
+                  try {
+                    const response = await fetch('/api/auth/login', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        email: 'collector@demo.com',
+                        password: 'demo123'
+                      })
+                    });
+                    const data = await response.json();
+                    if (response.ok) {
+                      login(data.user, data.accessToken, data.refreshToken);
+                      router.push('/collector/dashboard');
+                    }
+                  } catch (error) {
+                    console.error('Demo login failed:', error);
+                  }
                 }}
                 className="text-xs"
               >

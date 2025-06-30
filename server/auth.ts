@@ -10,7 +10,7 @@ interface RegisterData {
   fullName: string;
   phone: string;
   location: string;
-  role: 'resident' | 'collector';
+  role: 'resident' | 'collector' | 'admin';
 }
 
 interface LoginData {
@@ -64,7 +64,14 @@ export class AuthService {
         createdAt: users.createdAt,
       });
 
-    return newUser as User;
+    return {
+      ...newUser,
+      role: newUser.role as 'resident' | 'collector',
+      phone: newUser.phone || undefined,
+      location: newUser.location || undefined,
+      isActive: newUser.isActive || true,
+      createdAt: newUser.createdAt?.toISOString(),
+    } as User;
   }
 
   static async loginUser(loginData: LoginData): Promise<User> {
@@ -101,10 +108,10 @@ export class AuthService {
       id: user.id,
       email: user.email,
       fullName: user.fullName,
-      phone: user.phone,
-      location: user.location,
-      role: user.role as 'resident' | 'collector',
-      isActive: user.isActive,
+      phone: user.phone || undefined,
+      location: user.location || undefined,
+      role: user.role as 'resident' | 'collector' | 'admin',
+      isActive: user.isActive || true,
       lastLoginAt: user.lastLoginAt?.toISOString(),
       createdAt: user.createdAt?.toISOString(),
     };
@@ -133,7 +140,10 @@ export class AuthService {
 
     return {
       ...user,
-      role: user.role as 'resident' | 'collector',
+      role: user.role as 'resident' | 'collector' | 'admin',
+      phone: user.phone || undefined,
+      location: user.location || undefined,
+      isActive: user.isActive || true,
       lastLoginAt: user.lastLoginAt?.toISOString(),
       createdAt: user.createdAt?.toISOString(),
     };

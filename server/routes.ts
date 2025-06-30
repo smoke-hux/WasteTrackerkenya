@@ -2,6 +2,8 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { AuthService } from "./auth";
+import { JWTService } from "./jwt";
+import { authenticateToken, authorizeRoles, type AuthenticatedRequest } from "./middleware/auth";
 import { 
   insertUserSchema, insertPickupRequestSchema, insertCollectionSchema, 
   insertIllegalDumpingReportSchema, insertWasteMetricsSchema,
@@ -24,8 +26,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const user = await AuthService.loginUser({ email, password });
+      const tokens = JWTService.generateTokens(user);
+      
       console.log('Login successful for:', user.email); // Debug log
-      res.json({ user });
+      res.json({ 
+        user, 
+        accessToken: tokens.accessToken,
+        refreshToken: tokens.refreshToken
+      });
     } catch (error) {
       console.error('Login error:', error); // Debug log
       const message = error instanceof Error ? error.message : "Login failed";
@@ -58,17 +66,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
         role
       });
 
-      res.status(201).json({ user });
+      const tokens = JWTService.generateTokens(user);
+
+      res.status(201).json({ 
+        user,
+        accessToken: tokens.accessToken,
+        refreshToken: tokens.refreshToken
+      });
     } catch (error) {
       const message = error instanceof Error ? error.message : "Registration failed";
       res.status(400).json({ message });
     }
   });
 
+  // Token refresh endpoint
+  app.post("/api/auth/refresh", async (req, res) => {
+    try {
+      const { refreshToken } = req.body;
+      
+      if (!refreshToken) {
+        return res.status(400).json({ message: "Refresh token required" });
+      }
+
+      const newAccessToken = JWTService.refreshAccessToken(refreshToken);
+      res.json({ accessToken: newAccessToken });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Token refresh failed";
+      res.status(401).json({ message });
+    }
+  });
+
+  // Logout endpoint (client-side token removal)
+  app.post("/api/auth/logout", authenticateToken, async (req, res) => {
+    // With JWT, logout is typically handled client-side by removing the token
+    // This endpoint exists for consistency and future blacklisting implementation
+    res.json({ message: "Logged out successfully" });
+  });
+
   // Dashboard endpoints
-  app.get("/api/dashboard/resident/:userId", async (req, res) => {
+  app.get("/api/dashboard/resident/:userId", authenticateToken, authorizeRoles('resident'), async (req: AuthenticatedRequest, res) => {
     try {
       const userId = parseInt(req.params.userId);
+      
+      // Ensure users can only access their own dashboard
+      if (req.user!.id !== userId) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+      
       const data = await storage.getResidentDashboardData(userId);
       res.json(data);
     } catch (error) {
@@ -76,9 +120,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/dashboard/collector/:userId", async (req, res) => {
+  app.get("/api/dashboard/collector/:userId", authenticateToken, authorizeRoles('collector'), async (req: AuthenticatedRequest, res) => {
     try {
       const userId = parseInt(req.params.userId);
+      
+      // Ensure users can only access their own dashboard
+      if (req.user!.id !== userId) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+      
       const data = await storage.getCollectorDashboardData(userId);
       res.json(data);
     } catch (error) {
@@ -87,7 +137,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Pickup request endpoints
-  app.get("/api/pickup-requests", async (req, res) => {
+  app.get("/api/pickup-requests", authenticateToken, async (req: AuthenticatedRequest, res) => {
     try {
       const { residentId, collectorId, status } = req.query;
       const requests = await storage.getPickupRequests({
@@ -101,7 +151,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/pickup-requests", async (req, res) => {
+  app.post("/api/pickup-requests", authenticateToken, authorizeRoles('resident'), async (req: AuthenticatedRequest, res) => {
     try {
       console.log('Pickup request received:', req.body); // Debug log
       
@@ -135,7 +185,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch("/api/pickup-requests/:id", async (req, res) => {
+  app.patch("/api/pickup-requests/:id", authenticateToken, async (req: AuthenticatedRequest, res) => {
     try {
       const id = parseInt(req.params.id);
       const updates = req.body;
@@ -299,7 +349,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin endpoints - CRUD operations for all tables
-  app.get("/api/admin/users", async (req, res) => {
+  app.get("/api/admin/users", authenticateToken, authorizeRoles('admin'), async (req: AuthenticatedRequest, res) => {
     try {
       const users = await storage.getAllUsers();
       res.json(users);
@@ -308,7 +358,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/admin/pickup-requests", async (req, res) => {
+  app.get("/api/admin/pickup-requests", authenticateToken, authorizeRoles('admin'), async (req: AuthenticatedRequest, res) => {
     try {
       const requests = await storage.getAllPickupRequests();
       res.json(requests);
@@ -317,7 +367,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/admin/collections", async (req, res) => {
+  app.get("/api/admin/collections", authenticateToken, authorizeRoles('admin'), async (req: AuthenticatedRequest, res) => {
     try {
       const collections = await storage.getAllCollections();
       res.json(collections);
@@ -326,7 +376,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/admin/dumping-reports", async (req, res) => {
+  app.get("/api/admin/dumping-reports", authenticateToken, authorizeRoles('admin'), async (req: AuthenticatedRequest, res) => {
     try {
       const reports = await storage.getAllDumpingReports();
       res.json(reports);
@@ -335,7 +385,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/admin/environmental-achievements", async (req, res) => {
+  app.get("/api/admin/environmental-achievements", authenticateToken, authorizeRoles('admin'), async (req: AuthenticatedRequest, res) => {
     try {
       const achievements = await storage.getAllEnvironmentalAchievements();
       res.json(achievements);
@@ -344,7 +394,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/admin/users/:id", async (req, res) => {
+  app.put("/api/admin/users/:id", authenticateToken, authorizeRoles('admin'), async (req: AuthenticatedRequest, res) => {
     try {
       const id = parseInt(req.params.id);
       const user = await storage.updateUser(id, req.body);
@@ -354,7 +404,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/admin/users/:id", async (req, res) => {
+  app.delete("/api/admin/users/:id", authenticateToken, authorizeRoles('admin'), async (req: AuthenticatedRequest, res) => {
     try {
       const id = parseInt(req.params.id);
       await storage.deleteUser(id);
@@ -364,7 +414,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/admin/pickup-requests/:id", async (req, res) => {
+  app.put("/api/admin/pickup-requests/:id", authenticateToken, authorizeRoles('admin'), async (req: AuthenticatedRequest, res) => {
     try {
       const id = parseInt(req.params.id);
       const request = await storage.updatePickupRequest(id, req.body);
@@ -374,7 +424,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/admin/pickup-requests/:id", async (req, res) => {
+  app.delete("/api/admin/pickup-requests/:id", authenticateToken, authorizeRoles('admin'), async (req: AuthenticatedRequest, res) => {
     try {
       const id = parseInt(req.params.id);
       await storage.deletePickupRequest(id);
